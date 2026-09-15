@@ -45,4 +45,5 @@ included_repositories:
   - opendatahub-io/data-connect-hub
   - opendatahub-io/kale
   - opendatahub-io/workbenches-operator
+  - opendatahub-io/ai-gateway-controller
   # - opendatahub-io/opendatahub-tests
