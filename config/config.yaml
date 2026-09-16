@@ -318,15 +318,16 @@ exceptions:
     message: "*odh-kube-auth-proxy*"
     reason: "Test-only constant — OauthProxyImage only used in *_test.go and tests_common.go files, not in production code. Comment at line 54 confirms 'Used for test purposes'"
 
-  # LocalModelNode controller default storage-initializer image
+  # Shared download-job builder default storage-initializer image
   - rules:
       - no-image-tags
       - image-manifest-complete
     repo: kserve
     paths:
-      - "pkg/controller/v1alpha1/localmodelnode/controller.go"
-    message: "*storage-initializer*"
-    reason: "Default fallback image — overridden at runtime via inferenceservice-config ConfigMap, params.env wires kserve-storage-initializer to RELATED_IMAGE_ODH_KSERVE_STORAGE_INITIALIZER_IMAGE which injects the digest-pinned image"
+      - "pkg/controller/v1alpha1/localmodel/jobs/download.go"
+    images:
+      - "kserve/storage-initializer:*"
+    reason: "Compile-time fallback default in upstream code — always overridden at runtime by StorageInitializerConfig from inferenceservice-config ConfigMap; params.env wires RELATED_IMAGE_ODH_KSERVE_STORAGE_INITIALIZER_IMAGE which injects the digest-pinned image"
 
   # Modelcar init container ubi-micro — no-image-tags is secondary to image-manifest-complete fix
   - rules: no-image-tags
