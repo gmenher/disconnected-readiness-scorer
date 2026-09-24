@@ -68,13 +68,14 @@ exceptions:
       - "*.test.yaml"
     reason: "Test/mock file"
 
-  # CI directories
+  # CI directories and config files
   - rules: "*"
     paths:
       - ".github/**"
       - ".tekton/**"
       - ".buildkite/**"
       - "**/ci/**"
+      - "**/renovate.json"
     reason: "CI config — not deployed in production"
 
   # Non-production directories
