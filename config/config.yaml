@@ -212,6 +212,50 @@ exceptions:
       - "manifests/rhoai/apps/pachyderm/pachyderm-app.yaml"
     reason: "curl commands live inside OdhQuickStart/OdhApplication documentation fields shown in the dashboard UI — instructional text, not egress executed by the manifest"
 
+  # --- openshell ---
+  - rules: no-image-tags
+    repo: openshell
+    paths:
+      - "tasks/test.toml"
+    images:
+      - "openshell/e2e-python:dev"
+    reason: "Local Docker-backed E2E image; the task builds it locally and uses image pull policy never"
+    reference: "https://issues.redhat.com/browse/RHOAIENG-94493"
+
+  - rules: no-image-tags
+    repo: openshell
+    paths:
+      - "python/openshell/sandbox_test.py"
+    images:
+      - "ghcr.io/test/gpu-kata:latest"
+      - "ghcr.io/test/python:latest"
+    reason: "Unit-test fixture and assertion image strings — not production workload references"
+    reference: "https://issues.redhat.com/browse/RHOAIENG-94493"
+
+  - rules: no-image-tags
+    repo: openshell
+    paths:
+      - "python/openshell/sandbox.py"
+    message: "*crates/openshell-cli/src/oidc_auth.rs::http_client*"
+    reason: "Rust source-location reference in a Python docstring, not a container image"
+    reference: "https://issues.redhat.com/browse/RHOAIENG-94493"
+
+  - rules: no-image-tags
+    repo: openshell
+    paths:
+      - "deploy/helm/openshell/skaffold.yaml"
+    images:
+      - "oci://docker.io/envoyproxy/gateway-helm"
+    reason: "Envoy Gateway dependency belongs only to the local-development high-availability Skaffold profile, not the ODH OpenShift installer"
+    reference: "https://issues.redhat.com/browse/RHOAIENG-94493"
+
+  - rules: no-runtime-egress
+    repo: openshell
+    paths:
+      - "scripts/smoke-test-network-policy.sh"
+    reason: "Smoke test intentionally verifies allowed and denied sandbox egress and credential-injection policy behavior"
+    reference: "https://issues.redhat.com/browse/RHOAIENG-94493"
+
   # --- kubeflow ---
   - rules:
       - image-manifest-complete
