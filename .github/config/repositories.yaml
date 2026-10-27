@@ -56,3 +56,4 @@ included_repositories:
   - opendatahub-io/odh-ide-extensions
   - opendatahub-io/elyra
   # - opendatahub-io/opendatahub-tests
+  - opendatahub-io/ogx-distribution

@@ -647,6 +647,10 @@ exceptions:
   # --- ogx ---
   # (no repo-specific exceptions)
 
+  # --- ogx-distribution ---
+  # (no repo-specific exceptions)
+
+
   # --- trainer ---
   - rules:
       - no-image-tags
