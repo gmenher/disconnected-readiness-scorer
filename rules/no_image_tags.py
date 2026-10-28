@@ -65,7 +65,7 @@ except ModuleNotFoundError:
 IMAGE_REF_PATTERN = re.compile(
     r"(https?://|oci://)?"
     r"((?:[\w.\-]+(?:\.[\w.\-]+)+(?::\d+)?/)?[\w.\-]+(?:/[\w.\-]+)+)"
-    r"([:@][\w.\-:]+)?"
+    r"(:[\w.\-]+|@sha256:[\w.\-:]+)?"
     r"(@sha256:[\w.\-:]+)?"
 )
 
@@ -95,6 +95,25 @@ _SKIP_FILENAMES = {
     "package.json",
 }
 
+# A repository component ending in one of these source or manifest suffixes
+# is a filesystem path, not a container image name. This keeps task arguments
+# and pytest node IDs out of the image-tag scanner without weakening detection
+# of normal registry/repository/image:tag references.
+_FILE_PATH_SUFFIXES = {
+    ".go",
+    ".json",
+    ".md",
+    ".py",
+    ".rs",
+    ".sh",
+    ".toml",
+    ".ts",
+    ".tsx",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
+
 
 def _is_sha256_pinned(ref_part: str | None, digest_part: str | None) -> bool:
     """True when the reference is pinned with ``@sha256:``.
@@ -116,6 +135,11 @@ def is_excluded_file(filepath: Path) -> bool:
 def is_source_code(filepath: Path) -> bool:
     """Source code files that hardcode image refs at runtime."""
     return filepath.suffix in SOURCE_EXTENSIONS
+
+
+def _is_file_path(repo_part: str) -> bool:
+    """Whether an image-shaped reference is recognizably a file path."""
+    return Path(repo_part).suffix.lower() in _FILE_PATH_SUFFIXES
 
 
 _MAX_FILE_SIZE = 512 * 1024  # 512 KB
@@ -210,6 +234,8 @@ def scan_file(
 
             if not is_oci:
                 if not ref_part:
+                    continue
+                if _is_file_path(repo_part):
                     continue
                 if "/" not in repo_part:
                     continue

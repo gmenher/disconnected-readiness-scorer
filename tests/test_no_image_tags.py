@@ -173,6 +173,16 @@ class TestScanFile:
         assert len(findings) == 1
         assert findings[0].image == "quay.io/org/img:v1"
 
+    def test_file_path_with_colon_argument_is_not_an_image(self, tmp_path):
+        f = tmp_path / "tasks.toml"
+        f.write_text('run = "mise run deploy/helm/openshell/ci/values-supervisor.yaml:deploy"')
+        assert scan_file(f, tmp_path) == []
+
+    def test_pytest_node_id_is_not_an_image(self, tmp_path):
+        f = tmp_path / "python-gates.toml"
+        f.write_text('test = "e2e/python/test_sandbox_api.py::test_sandbox_api_crud_and_exec"')
+        assert scan_file(f, tmp_path) == []
+
     def test_unreadable_file(self, tmp_path):
         f = tmp_path / "binary.go"
         f.write_bytes(b"\x80\x81\x82" * 100)

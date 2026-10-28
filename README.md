@@ -88,6 +88,10 @@ For detailed technical documentation of each rule — detection logic, regex pat
 | `params_env` | `params-env-wiring`       | Full `params.env` → kustomize → rendered manifest → Go `os.Getenv` wiring is valid     |
 | `manifest`   | `operator-manifest`       | Builds the authoritative RELATED_IMAGE manifest from the opendatahub-operator source   |
 
+The `no-image-tags` rule accepts OCI-compatible image tags and ignores pytest
+node IDs and filesystem paths ending in source or manifest extensions, which
+are not deployable image references.
+
 **Network access:** `csv`, `tags`, and `params_env` clone the `opendatahub-operator` repo (shallow) whenever the target repo is detected as using the `RELATED_IMAGE_*` env var pattern, to cross-reference image env vars against the authoritative manifest. Use `--operator-path` to point at a pre-cloned copy and avoid the clone (e.g. for fully offline runs).
 
 **Production scope** (not a rule): Uses arch-analyzer to identify production code directories. Files outside production scope are skipped (no findings emitted). Disabled with `--no-production-scope`.
