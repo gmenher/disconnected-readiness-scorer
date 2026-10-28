@@ -146,7 +146,7 @@ def _is_explicit_yaml_image_field(line: str, is_yaml: bool) -> bool:
     A path-like spelling in a Kubernetes ``image:`` field is still an image;
     do not let an unrelated repository file suppress that deployment finding.
     """
-    return is_yaml and bool(re.match(r"^\s*(?:-\s*)?image:\s*", line))
+    return is_yaml and bool(re.match(r"^\s*(?:-\s*)?(?:image|['\"]image['\"])\s*:\s*", line))
 
 
 _MAX_FILE_SIZE = 512 * 1024  # 512 KB

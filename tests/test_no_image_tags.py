@@ -188,6 +188,13 @@ class TestScanFile:
         assert len(findings) == 1
         assert findings[0].image == "deploy/helm/values.yaml:deploy"
 
+    def test_image_name_with_file_like_suffix_is_still_detected(self, tmp_path):
+        f = tmp_path / "deployment.yaml"
+        f.write_text("image: quay.io/org/controller.yaml:latest")
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "quay.io/org/controller.yaml:latest"
+
     def test_existing_file_with_unknown_suffix_is_not_an_image(self, tmp_path):
         target = tmp_path / "generated/catalog.asset"
         target.parent.mkdir()
@@ -214,6 +221,16 @@ class TestScanFile:
         target.write_text("{}")
         f = tmp_path / "deployment.yaml"
         f.write_text("image: deploy/helm/values.yaml:latest")
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "deploy/helm/values.yaml:latest"
+
+    def test_quoted_yaml_image_field_is_not_hidden_by_repository_file(self, tmp_path):
+        target = tmp_path / "deploy/helm/values.yaml"
+        target.parent.mkdir(parents=True)
+        target.write_text("{}")
+        f = tmp_path / "deployment.yaml"
+        f.write_text('"image": deploy/helm/values.yaml:latest')
         findings = scan_file(f, tmp_path)
         assert len(findings) == 1
         assert findings[0].image == "deploy/helm/values.yaml:latest"
