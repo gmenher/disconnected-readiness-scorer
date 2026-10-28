@@ -140,13 +140,21 @@ def _is_repository_file_path(root: Path, repo_part: str) -> bool:
     return resolved.is_file()
 
 
-def _is_explicit_yaml_image_field(line: str, is_yaml: bool) -> bool:
-    """Whether *line* assigns an image value in a YAML manifest.
+def _is_explicit_yaml_image_field(line: str, is_yaml: bool, value_start: int) -> bool:
+    """Whether the value at *value_start* belongs to a YAML ``image`` key.
 
     A path-like spelling in a Kubernetes ``image:`` field is still an image;
     do not let an unrelated repository file suppress that deployment finding.
+    Checking the text immediately before the value also supports flow-style
+    YAML (``{image: ...}``) without classifying a different value later on the
+    same line as an image.
     """
-    return is_yaml and bool(re.match(r"^\s*(?:-\s*)?(?:image|['\"]image['\"])\s*:\s*", line))
+    return is_yaml and bool(
+        re.search(
+            r"(?:^|[\s,{])(?:image|['\"]image['\"])\s*:\s*['\"]?\s*$",
+            line[:value_start],
+        )
+    )
 
 
 _MAX_FILE_SIZE = 512 * 1024  # 512 KB
@@ -243,7 +251,7 @@ def scan_file(
                 if not ref_part:
                     continue
                 if _is_repository_file_path(root, repo_part) and not _is_explicit_yaml_image_field(
-                    line, is_yaml
+                    line, is_yaml, match.start(2)
                 ):
                     continue
                 if "/" not in repo_part:

@@ -88,7 +88,7 @@ For detailed technical documentation of each rule — detection logic, regex pat
 | `params_env` | `params-env-wiring`       | Full `params.env` → kustomize → rendered manifest → Go `os.Getenv` wiring is valid     |
 | `manifest`   | `operator-manifest`       | Builds the authoritative RELATED_IMAGE manifest from the opendatahub-operator source   |
 
-The `no-image-tags` rule accepts OCI-compatible image tags and ignores pytest
+The `no-image-tags` rule parses OCI-compatible image tag syntax and ignores pytest
 node IDs plus references that resolve to a regular file inside the scanned
 repository. This evidence-based distinction avoids treating task arguments as
 deployable images without maintaining a brittle list of filename extensions;

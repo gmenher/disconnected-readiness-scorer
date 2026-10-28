@@ -235,6 +235,16 @@ class TestScanFile:
         assert len(findings) == 1
         assert findings[0].image == "deploy/helm/values.yaml:latest"
 
+    def test_flow_style_yaml_image_field_is_not_hidden_by_repository_file(self, tmp_path):
+        target = tmp_path / "deploy/helm/values.yaml"
+        target.parent.mkdir(parents=True)
+        target.write_text("{}")
+        f = tmp_path / "deployment.yaml"
+        f.write_text("container: {image: deploy/helm/values.yaml:latest}")
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "deploy/helm/values.yaml:latest"
+
     def test_pytest_node_id_is_not_an_image(self, tmp_path):
         f = tmp_path / "python-gates.toml"
         f.write_text('test = "e2e/python/test_sandbox_api.py::test_sandbox_api_crud_and_exec"')
