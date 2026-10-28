@@ -89,8 +89,10 @@ For detailed technical documentation of each rule — detection logic, regex pat
 | `manifest`   | `operator-manifest`       | Builds the authoritative RELATED_IMAGE manifest from the opendatahub-operator source   |
 
 The `no-image-tags` rule accepts OCI-compatible image tags and ignores pytest
-node IDs and filesystem paths ending in source or manifest extensions, which
-are not deployable image references.
+node IDs plus references that resolve to a regular file inside the scanned
+repository. This evidence-based distinction avoids treating task arguments as
+deployable images without maintaining a brittle list of filename extensions;
+YAML `image:` fields always remain image references.
 
 **Network access:** `csv`, `tags`, and `params_env` clone the `opendatahub-operator` repo (shallow) whenever the target repo is detected as using the `RELATED_IMAGE_*` env var pattern, to cross-reference image env vars against the authoritative manifest. Use `--operator-path` to point at a pre-cloned copy and avoid the clone (e.g. for fully offline runs).
 

@@ -95,25 +95,6 @@ _SKIP_FILENAMES = {
     "package.json",
 }
 
-# A repository component ending in one of these source or manifest suffixes
-# is a filesystem path, not a container image name. This keeps task arguments
-# and pytest node IDs out of the image-tag scanner without weakening detection
-# of normal registry/repository/image:tag references.
-_FILE_PATH_SUFFIXES = {
-    ".go",
-    ".json",
-    ".md",
-    ".py",
-    ".rs",
-    ".sh",
-    ".toml",
-    ".ts",
-    ".tsx",
-    ".xml",
-    ".yaml",
-    ".yml",
-}
-
 
 def _is_sha256_pinned(ref_part: str | None, digest_part: str | None) -> bool:
     """True when the reference is pinned with ``@sha256:``.
@@ -137,9 +118,35 @@ def is_source_code(filepath: Path) -> bool:
     return filepath.suffix in SOURCE_EXTENSIONS
 
 
-def _is_file_path(repo_part: str) -> bool:
-    """Whether an image-shaped reference is recognizably a file path."""
-    return Path(repo_part).suffix.lower() in _FILE_PATH_SUFFIXES
+def _is_repository_file_path(root: Path, repo_part: str) -> bool:
+    """Return whether *repo_part* resolves to a regular file inside *root*.
+
+    OCI repository names and filesystem paths overlap syntactically, so suffix
+    heuristics (``.yaml``, ``.py``, ...) are not reliable: they either miss
+    future file types or hide legitimate image names.  A reference is treated
+    as a path only when the scanned repository itself proves it is one.
+
+    The containment check rejects traversal and symlinks escaping the target
+    repository.  A directory is deliberately not enough evidence: image
+    repositories are commonly directory-shaped.
+    """
+    root_resolved = root.resolve()
+    candidate = root / repo_part
+    try:
+        resolved = candidate.resolve()
+        resolved.relative_to(root_resolved)
+    except (OSError, ValueError):
+        return False
+    return resolved.is_file()
+
+
+def _is_explicit_yaml_image_field(line: str, is_yaml: bool) -> bool:
+    """Whether *line* assigns an image value in a YAML manifest.
+
+    A path-like spelling in a Kubernetes ``image:`` field is still an image;
+    do not let an unrelated repository file suppress that deployment finding.
+    """
+    return is_yaml and bool(re.match(r"^\s*(?:-\s*)?image:\s*", line))
 
 
 _MAX_FILE_SIZE = 512 * 1024  # 512 KB
@@ -235,7 +242,9 @@ def scan_file(
             if not is_oci:
                 if not ref_part:
                     continue
-                if _is_file_path(repo_part):
+                if _is_repository_file_path(root, repo_part) and not _is_explicit_yaml_image_field(
+                    line, is_yaml
+                ):
                     continue
                 if "/" not in repo_part:
                     continue

@@ -173,10 +173,50 @@ class TestScanFile:
         assert len(findings) == 1
         assert findings[0].image == "quay.io/org/img:v1"
 
-    def test_file_path_with_colon_argument_is_not_an_image(self, tmp_path):
+    def test_existing_file_path_with_colon_argument_is_not_an_image(self, tmp_path):
+        target = tmp_path / "deploy/helm/openshell/ci/values-supervisor.yaml"
+        target.parent.mkdir(parents=True)
+        target.write_text("{}")
         f = tmp_path / "tasks.toml"
         f.write_text('run = "mise run deploy/helm/openshell/ci/values-supervisor.yaml:deploy"')
         assert scan_file(f, tmp_path) == []
+
+    def test_absent_path_like_reference_is_still_an_image(self, tmp_path):
+        f = tmp_path / "tasks.toml"
+        f.write_text('run = "tool deploy/helm/values.yaml:deploy"')
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "deploy/helm/values.yaml:deploy"
+
+    def test_existing_file_with_unknown_suffix_is_not_an_image(self, tmp_path):
+        target = tmp_path / "generated/catalog.asset"
+        target.parent.mkdir()
+        target.write_text("generated")
+        f = tmp_path / "tasks.toml"
+        f.write_text('run = "tool generated/catalog.asset:build"')
+        assert scan_file(f, tmp_path) == []
+
+    def test_symlink_escaping_repository_is_not_treated_as_a_path(self, tmp_path):
+        external = tmp_path.parent / "external-values.yaml"
+        external.write_text("external")
+        link = tmp_path / "deploy/helm/values.yaml"
+        link.parent.mkdir(parents=True)
+        link.symlink_to(external)
+        f = tmp_path / "tasks.toml"
+        f.write_text('run = "tool deploy/helm/values.yaml:deploy"')
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "deploy/helm/values.yaml:deploy"
+
+    def test_explicit_yaml_image_field_is_not_hidden_by_repository_file(self, tmp_path):
+        target = tmp_path / "deploy/helm/values.yaml"
+        target.parent.mkdir(parents=True)
+        target.write_text("{}")
+        f = tmp_path / "deployment.yaml"
+        f.write_text("image: deploy/helm/values.yaml:latest")
+        findings = scan_file(f, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].image == "deploy/helm/values.yaml:latest"
 
     def test_pytest_node_id_is_not_an_image(self, tmp_path):
         f = tmp_path / "python-gates.toml"

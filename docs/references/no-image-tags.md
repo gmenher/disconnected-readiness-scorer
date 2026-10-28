@@ -14,7 +14,7 @@ The rule scans `.go`, `.py`, `.yaml`, `.yml`, `.json`, `.toml` files and Dockerf
 | **OCI URI without digest** | `oci://` URI missing `@sha256:` pin | `oci://registry.io/chart:1.0` |
 | **Unqualified k8s image** | `image: name:tag` in YAML `image:` fields | `image: nginx:latest` |
 
-Only git-tracked files are scanned. Files larger than 512 KB are skipped. Package-manager metadata files (`package.json`, npm/pnpm lockfiles, and `pnpm-workspace.yaml`) are excluded to avoid false positives from npm package references. HTTP/HTTPS URLs, filesystem paths ending in source or manifest extensions, and pytest node IDs such as `path/test.py::test_name` are not treated as image references.
+Only git-tracked files are scanned. Files larger than 512 KB are skipped. Package-manager metadata files (`package.json`, npm/pnpm lockfiles, and `pnpm-workspace.yaml`) are excluded to avoid false positives from npm package references. HTTP/HTTPS URLs and pytest node IDs such as `path/test.py::test_name` are not treated as image references. When a string can be either an image or a path, it is excluded only if it resolves to a regular file within the scanned repository; this works for any file type and does not trust traversal or symlinks outside the repository. A YAML `image:` field is always treated as an image reference.
 
 Source code files (`.go`, `.py`, `.sh`) receive an additional annotation noting the image is hardcoded in source, making it harder to update centrally.
 
